@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <% include ../partials/head %>
+  </head>
+  <script type="text/javascript">
+  function blastEvent() {
+    $('#loadingSpinner').removeClass('hide');
+    var button = $(event.target);
+    button.prop("disabled", true);
+    $.ajax({
+      type: "POST",
+      url: "/event/blast",
+      data: {eventId: $('#eventId').val()},
+      success: function(response) {
+        button.prop("disabled", false);
+        $('#loadingSpinner').addClass('hide');
+        var message = response.message;
+        if (message.error) {
+          $('#fieldsForm').addClass("hide");
+          $('#messageError').removeClass("hide").text(message.error);
+        }
+        else {
+          $('#fieldsForm').removeClass("hide");
+          if (message.success) {
+            $('#messageSuccess').removeClass("hide").text(message.success);
+          }
+        }
+      },
+      fail: function() {
+        button.prop("disabled", false);
+        $('#loadingSpinner').addClass('hide');
+      }
+    });
+  };
+  function searchEvent() {
+    window.location.href = window.location.pathname + "?q=" + $('#searcnQuery').val();
+  }
+  </script>
+  <body>
+  <header>
+    <% include ../partials/header %>
+  </header>
+
+  <main class="container">
+      <div class="alert alert-success <%= message.success?"":"hide" %>" id="messageSuccess"><%= message.success %></div>
+      <div class="alert alert-danger <%= message.error?"":"hide" %>" id="messageError"><%= message.error %></div>
+    <% if (!message.error) { %>
+  <form method="POST" style="margin-left: 10; margin-right: 10;" id="fieldsForm">
+    <legend>Search Event</legend>
+      <div class="input-group" name="search">
+      <input name="searcnQuery" id="searcnQuery" placeholder="Query" value="<%= query %>" class="form-control"/>
+      <span class="input-group-btn">
+        <input type="button" class="btn btn-primary" value="Search" onclick="searchEvent();"/>
+      </span>
+      <br />
+      </div>
+      <hr />
+    <% if (query) { %>
+    <div class="form-group">
+      <input name="eventId" id="eventId" type="hidden" value="<%= eventId %>"/>
+    </div>
+    <div class="form-group">
+      <label for="locationId">Event Name</label>
+      <input name="eventName" id="eventName" placeholder="Event Name" value="<%= eventName %>" class="form-control"/>
+    </div>
+    <div class="form-group">
+      <label for="locationId">Description</label>
+      <input name="description" id="description" placeholder="Event Name" value="<%= description %>" class="form-control"/>
+    </div>
+    <div class="form-group">
+      <label for="locationId">Venue Name</label>
+      <input name="locationName" id="locationName" placeholder="Event Name" value="<%= locationName %>" class="form-control"/>
+    </div>
+    <div class="row">
+      <div class="form-group col-md-4">
+        <label for="latitude">Latitude</label>
+        <input name="latitude" id="latitude" placeholder="Latitude" value="<%= latitude %>" class="form-control"/>
+      </div>
+      <div class="form-group col-md-4">
+        <label for="longitude">Longitude</label>
+        <input name="longitude" id="longitude" placeholder="Longitude" value="<%= longitude %>" class="form-control"/>
+      </div>
+      <div class="form-group col-md-4">
+        <label for="radius">Radius</label>
+        <div class="input-group">
+          <input name="radius" id="radius" placeholder="Radius" value="<%= radius %>" class="form-control"/>
+          <span class="input-group-addon">m</span>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="timeRange">Time Range</label>
+          <div class="row" id="timeRange" name="timeRange">
+             <div class='col-md-6'>
+                <input type='text' class="form-control" id='startDate' value="<%= startDate %>" />
+              </div>
+              <div class='col-md-6'>
+                <input type='text' class="form-control" id='endDate' value="<%= endDate %>" />
+              </div>
+          </div>
+    </div>
+
+    <div class="form-group">
+      <% if (eventNo !== undefined) { %>
+      <a href="/event/search?q=<%= query %>&no=<%= eventNo>0?parseInt(eventNo)-1:0%>" class="btn btn-default" role="button">Prev</a>
+      <% } %>
+      <input type="button" class="btn btn-primary" value="Blast" onclick="blastEvent();"/>
+      <% if (eventNo !== undefined) { %>
+      <a href="/event/search?q=<%= query %>&no=<%= parseInt(eventNo)+1%>" class="btn btn-default" role="button">Next</a>
+      <% } %>
+      <% if (eventNo !== undefined) { %>
+      <p><b> <%= (parseInt(eventNo) + 1) + " of " + totalCount %> </b></p>
+      <% } %>
+    </div>
+
+    <% } %>
+    <br />
+    <br />
+  </form>
+
+  <% } %>
+  </main>
+  <footer>
+    <% include ../partials/footer %>
+  </footer>
+  </body>
+</html>
+

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<% include ./partials/head %>
+  </head>
+  <body>
+	<header>
+		<% include ./partials/header %>
+	</header>
+    <main class="container">
+  	<% if (message && message.success) { %>
+  		<div class="alert alert-success"><%= message.success %></div>
+  	<% } else if (message && message.error) { %>
+  		<div class="alert alert-danger"><%= message.error %></div>
+  	<% } else { %>
+	<% if (message && message.warning) { %>
+  		<div class="alert alert-warning"><%= message.warning %></div>
+  	<% } %>
+  	
+    <div class="jumbotron vertical-center">
+    <div class="container">
+    <h2> Welcome to Admin! </h2>
+    <div class="form-group">
+      <label for="userCount">Total users: </label>
+      <label name="userCount"><%= userCount %></label>
+    </div>
+    </div>
+    </div>
+
+	<% } %>
+	</main>
+	<footer>
+	  <% include ./partials/footer %>
+	</footer>
+  </body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <% include ../partials/head %>
+  </head>
+  <script type="text/javascript">
+  function sendPush() {
+  	var message = $('#pushMessage').val();
+  	if (!message) {
+  		alert("Please input a message to send");
+  		return;
+  	}
+    $('#loadingSpinner').removeClass('hide');
+    var button = $(event.target);
+    button.prop("disabled", true);
+  	$.ajax({
+  		type: "POST",
+  		url: window.location.pathname,
+  		data: {message: message},
+  		success: function(response) {
+        button.prop("disabled", false);
+        $('#loadingSpinner').addClass('hide');
+  			var message = response.message;
+	  		if (message.error) {
+	  			$('#fieldsForm').removeClass("hide");
+	  			$('#messageError').removeClass("hide").text(message.error);
+	  		}
+	  		else {
+	  			$('#fieldsForm').addClass("hide");
+          $('#messageError').addClass("hide");
+		  		if (message.success) {
+		  			$('#messageSuccess').removeClass("hide").text(message.success);
+		  		}
+	  		}
+      },
+      fail: function() {
+        button.prop("disabled", false);
+        $('#loadingSpinner').addClass('hide');
+      }
+  	});
+  };
+  </script>
+  <body>
+  <header>
+    <% include ../partials/header %>
+  </header>
+  <main class="container">
+  <div class="alert alert-success <%= message.success?"":"hide" %>" id="messageSuccess"><%= message.success %></div>
+  <div class="alert alert-danger <%= message.error?"":"hide" %>" id="messageError"><%= message.error %></div>
+	<form method="POST" style="margin-left: 10; margin-right: 10;" id="fieldsForm">
+	  <legend>Send Push Notification</legend>
+	  <div class="form-group">
+	    <label for="pushMessage">Message to send</label>
+	    <input name="pushMessage" id="pushMessage" placeholder="Message to send" class="form-control"/>
+	  </div>
+	  <div class="form-group">
+	    <label for="totalCount">Total devices to send push: </label>
+	    <label name="totalCount"><%= deviceCount %></label>
+	  </div>
+	  <div class="form-group">
+	    <input type="button" class="btn btn-primary" value="Send" onclick="sendPush();"/>
+	  </div>
+	</form>
+  </main>
+  <footer>
+    <% include ../partials/footer %>
+  </footer>
+
+  </body>
+</html>
+

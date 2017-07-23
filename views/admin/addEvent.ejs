@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <% include ../partials/head %>
+      <script src="/javascripts/bootstrap-switch.min.js"></script>
+      <script src="/javascripts/moment.min.js"></script>
+      <script src="/javascripts/collapse.js"></script>
+      <script src="/javascripts/transition.js"></script>
+      <script src="/javascripts/bootstrap-datetimepicker.min.js"></script>
+      <script src="/javascripts/bootstrap-select.min.js"></script>
+      <script src="/javascripts/jasny-bootstrap.min.js"></script>
+      <link rel='stylesheet' href='/stylesheets/bootstrap-switch.min.css' />
+      <link rel='stylesheet' href='/stylesheets/bootstrap-datetimepicker.min.css' />
+      <link rel='stylesheet' href='/stylesheets/bootstrap-select.min.css' />
+      <link rel='stylesheet' href='/stylesheets/jasny-bootstrap.min.css' />
+  </head>
+  <script type="text/javascript">
+  function addEvent() {
+  	var message = $('#pushMessage').val();
+    $('#loadingSpinner').removeClass('hide');
+    var button = $(event.target);
+    button.prop("disabled", true);
+
+    var formData = new FormData();
+    formData.append("name", $('#name').val());
+    formData.append("desc", $('#description').val());
+    formData.append("locationId", $('#locationId').val());
+    formData.append("locationName", $('#locationName').val());
+    formData.append("lat", $('#latitude').val());
+    formData.append("lng", $('#longitude').val());
+    formData.append("radius", $('#radius').val());
+    formData.append("author", $('#author').val());
+    formData.append("start", $('#startDate').data("DateTimePicker").getDate().unix());
+    formData.append("end", $('#endDate').data("DateTimePicker").getDate().unix());
+    var coverFile = document.getElementById('cover');
+    if (coverFile.files[0]) {
+      formData.append("cover", coverFile.files[0]);
+      formData.append("coverWidth", $('#coverWidth').val());
+      formData.append("coverHeight", $('#coverHeight').val());
+    }
+
+    var popularity = $('#popularity').val();
+    if (popularity) {
+      formData.append("popularity", popularity);
+    }
+
+  	$.ajax({
+  		type: "POST",
+  		url: window.location.pathname,
+  		data: formData,
+      contentType: false,
+      processData: false,
+  		success: function(response) {
+        button.prop("disabled", false);
+        $('#loadingSpinner').addClass('hide');
+  			var message = response.message;
+	  		if (message.error) {
+	  			$('#fieldsForm').removeClass("hide");
+	  			$('#messageError').removeClass("hide").text(message.error);
+	  		}
+	  		else {
+	  			$('#fieldsForm').addClass("hide");
+          $('#messageError').addClass("hide");
+		  		if (message.success) {
+		  			$('#messageSuccess').removeClass("hide").text(message.success);
+		  		}
+	  		}
+      },
+      fail: function() {
+        button.prop("disabled", false);
+        $('#loadingSpinner').addClass('hide');
+      }
+  	});
+  };
+
+  $(function() {
+    $('#privacy').bootstrapSwitch();
+  });
+  </script>
+  <body>
+  <header>
+    <% include ../partials/header %>
+  </header>
+  <main class="container">
+  <div class="alert alert-success <%= message.success?"":"hide" %>" id="messageSuccess"><%= message.success %></div>
+  <div class="alert alert-danger <%= message.error?"":"hide" %>" id="messageError"><%= message.error %></div>
+	<form method="POST" style="margin-left: 10; margin-right: 10;" id="fieldsForm">
+	  <legend>Add Event</legend>
+    <div class="row">
+      <div class="form-group col-md-6">
+        <div class="form-group">
+          <label for="name">Event Name</label>
+          <input name="name" id="name" placeholder="Event Name" class="form-control"/>
+        </div>
+        <div class="form-group">
+          <label for="desc">Description</label>
+          <textarea name="desc" id="desc" class="form-control" placeholder="Description"></textarea>
+        </div>
+      </div>
+      <div class="form-group col-md-6">
+        <div class="fileinput fileinput-new" data-provides="fileinput">
+          <div class="fileinput-new thumbnail" style="width: 200px; height: 150px;">
+            <img data-src="" alt="...">
+          </div>
+          <div class="fileinput-preview fileinput-exists thumbnail" style="max-width: 200px; max-height: 150px;"></div>
+          <div>
+            <span class="btn btn-default btn-file"><span class="fileinput-new">Select image</span><span class="fileinput-exists">Change</span><input type="file" name="cover" id="cover"></span>
+            <a href="#" class="btn btn-default fileinput-exists" data-dismiss="fileinput">Remove</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="form-group col-md-6">
+        <label for="locationId">Venue Id</label>
+        <input name="locationId" id="locationId" placeholder="Venue Id" class="form-control"/>
+      </div>
+      <div class="form-group col-md-6">
+        <label for="locationName">Venue Name</label>
+        <input name="locationName" id="locationName" placeholder="Venue Name" class="form-control"/>
+      </div>
+    </div>
+    <div class="row">
+      <div class="form-group col-md-4">
+        <label for="latitude">Latitude</label>
+        <input name="latitude" id="latitude" placeholder="Latitude" class="form-control"/>
+      </div>
+      <div class="form-group col-md-4">
+        <label for="longitude">Longitude</label>
+        <input name="longitude" id="longitude" placeholder="Longitude" class="form-control"/>
+      </div>
+      <div class="form-group col-md-4">
+        <label for="radius">Radius</label>
+        <div class="input-group">
+          <input name="radius" id="radius" placeholder="Radius" class="form-control"/>
+          <span class="input-group-addon">m</span>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="form-group col-md-6">
+        <label for="author">Author</label>
+        <select class="selectpicker form-control" id="author" name="author">
+          <% if (creators) { creators.forEach(function(user, index) { %>
+            <option value="<%= user.id %>"><%= user.username %></option>
+          <% }); } %>
+        </select>
+      </div>
+      <div class="form-group col-md-6">
+        <label for="privacy">Privacy </label><br />
+        <input name="privacy" id="privacy" type="checkbox" class="form-control" data-on-text="Fan" data-off-text="Public" data-off-color="success"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="timeRange">Time Range</label>
+      <div class="container" id="timeRange" name="timeRange">
+          <div class="row">
+             <div class='col-md-6'>
+                  <div class="form-group">
+                      <div class='input-group date' id='startDate'>
+                          <input type='text' class="form-control" />
+                          <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span>
+                          </span>
+                      </div>
+                  </div>
+              </div>
+              <div class='col-md-6'>
+                  <div class="form-group">
+                      <div class='input-group date' id='endDate'>
+                          <input type='text' class="form-control" />
+                          <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span>
+                          </span>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="form-group col-md-6">
+        <label for="popularity">Popularity</label>
+        <input name="popularity" id="popularity" placeholder="Popularity Level" class="form-control"/>
+      </div>
+    </div>
+        <script type="text/javascript">
+            $(function () {
+              $('#popularity').tooltip({title: "Maximum popularity now is <%= maxPopularLevel?maxPopularLevel:0 %>"});
+                $('#startDate').datetimepicker();
+                $('#endDate').datetimepicker();
+
+                $("#startDate").on("dp.change",function (e) {
+                   $('#endDate').data("DateTimePicker").setMinDate(e.date);
+                });
+                $("#endDate").on("dp.change",function (e) {
+                   $('#startDate').data("DateTimePicker").setMaxDate(e.date);
+                });
+                $('#startDate').data("DateTimePicker").setDate(moment().add(-1, 'h'));
+                $('#endDate').data("DateTimePicker").setDate(moment().add(1, 'h'));
+            });
+        </script>
+	  <div class="form-group">
+	    <input type="button" class="btn btn-primary" value="Add" onclick="addEvent();"/>
+	  </div>
+    <div class="form-group">
+      <input type="hidden" id="coverWidth" />
+      <input type="hidden" id="coverHeight" />
+        <script type="text/javascript">
+            $(function () {
+                $('#cover').change(function() {
+                  var _URL = window.URL || window.webkitURL;
+                  var file, img;
+                  if ((file=this.files[0])) {
+                    img = new Image();
+                    img.onload = function() {
+                      $('#coverWidth').val(this.width);
+                      $('#coverHeight').val(this.height);
+                    }
+                    img.src = _URL.createObjectURL(file);
+                  }
+                });
+            });
+        </script>
+      <br />
+      <br />
+    </div>
+	</form>
+  </main>
+  <footer>
+    <% include ../partials/footer %>
+  </footer>
+
+  </body>
+</html>

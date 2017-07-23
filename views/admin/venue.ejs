@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <% include ../partials/head %>
+  </head>
+  <script type="text/javascript">
+  function updateVenue() {
+  	$('#loadingSpinner').removeClass('hide');
+  	var button = $(event.target);
+  	button.prop("disabled", true);
+  	$.ajax({
+  		type: "POST",
+  		url: window.location.pathname,
+  		data: {locationId: $('#locationId').val(), locationName: $('#locationName').val(), latitude: $('#latitude').val(), longitude: $('#longitude').val(), radius: $('#radius').val()},
+  		success: function(response) {
+		  	button.prop("disabled", false);
+  			$('#loadingSpinner').addClass('hide');
+  			var message = response.message;
+	  		if (message.error) {
+	  			$('#fieldsForm').addClass("hide");
+	  			$('#messageError').removeClass("hide").text(message.error);
+	  		}
+	  		else {
+	  			$('#fieldsForm').removeClass("hide");
+		  		if (message.success) {
+		  			$('#messageSuccess').removeClass("hide").text(message.success);
+		  		}
+	  		}
+  		},
+  		fail: function() {
+		  	button.prop("disabled", false);
+  			$('#loadingSpinner').addClass('hide');
+  		}
+  	});
+  };
+  function mergeVenue() {
+  	var fromId = event.target.id;
+  	var toId = $('#locationId').val();
+  	$('#loadingSpinner').removeClass('hide');
+  	var button = $(event.target);
+  	button.prop("disabled", true);
+
+  	$.ajax({
+  		type: "POST",
+  		url: '/venue/merge',
+  		data: {to: toId, from: fromId},
+  		success: function(response) {
+		  	button.prop("disabled", false);
+  			$('#loadingSpinner').addClass('hide');
+  			var message = response.message;
+	  		if (message.error) {
+	  			$('#messageError').removeClass("hide").text(message.error);
+		  		$('#messageSuccess').addClass("hide").text(message.success);
+	  		}
+	  		else {
+		  		$('#messageError').addClass("hide").text(message.success);
+		  		if (message.success) {
+		  			$('#messageSuccess').removeClass("hide").text(message.success);
+		  		}
+		  		$('#merge-' + fromId).remove();
+	  		}
+  		},
+  		fail: function() {
+		  	button.prop("disabled", false);
+  			$('#loadingSpinner').addClass('hide');
+  		}
+  	});
+  };
+  function searchVenue() {
+  	$('#loadingSpinner').removeClass('hide');
+  	var button = $(event.target);
+  	button.prop("disabled", true);
+  	$.ajax({
+  		type: "POST",
+  		url: '/venue/search',
+  		data: {locationName: $('#searchName').val()},
+  		success: function(response) {
+		  	button.prop("disabled", false);
+  			$('#loadingSpinner').addClass('hide');
+ 			var message = response.message;
+	  		if (message.error) {
+	  			$('#fieldsForm').addClass("hide");
+	  			$('#messageError').removeClass("hide").text(message.error);
+	  		}
+	  		else {
+	  			$('#fieldsForm').removeClass("hide");
+		  		var results = response.results;
+		  		var currentId = results.indexOf($('#locationId').val());
+
+		  		if (currentId > -1)
+		  			results.splice(currentId, 1);
+
+		  		for (var i=0; i<results.length; i++) {
+		  			$('#searchResults').append(
+				  	'<div class="col-md-6" id="merge-' + results[i] + '"><div class="input-group">' +
+					  // '<input name="mergeId" id="mergeId" value="" placeholder="Venue Id" class="form-control" readonly/>' +
+					  '<a href="/venue?id=' + results[i] + '" class="btn btn-link" role="button" target="_blank">' + results[i] + '</a>' +
+					  '<span class="input-group-btn">' +
+					    '<input type="button" class="btn btn-primary" value="Merge" id="' + results[i] + '" onclick="mergeVenue();"/>' +
+					  '</span>' +
+				    '</div></div>');
+		  		}
+	  		}
+  		},
+  		fail: function() {
+		  	button.prop("disabled", false);
+  			$('#loadingSpinner').addClass('hide');
+  		}
+  	});
+  };
+  function deleteVenue() {
+  	var confirmed = confirm("Are you sure delete this venue and events?");
+  	if (confirmed) {
+	  	$('#loadingSpinner').removeClass('hide');
+	  	var button = $(event.target);
+	  	button.prop("disabled", true);
+	  	$.ajax({
+	  		type: "DELETE",
+	  		url: window.location.pathname,
+	  		data: {locationId: $('#locationId').val()},
+	  		success: function(response) {
+			  	button.prop("disabled", false);
+	  			$('#loadingSpinner').addClass('hide');
+				var message = response.message;
+		  		if (message.error) {
+		  			$('#fieldsForm').addClass("hide");
+		  			$('#messageError').removeClass("hide").text(message.error);
+		  		}
+		  		else {
+		  			$('#fieldsForm').removeClass("hide");
+			  		if (message.success) {
+			  			$('#messageSuccess').removeClass("hide").text(message.success);
+			  		}
+			  		location.reload(true);
+		  		}
+	  		},
+	  		fail: function() {
+			  	button.prop("disabled", false);
+	  			$('#loadingSpinner').addClass('hide');
+	  		}
+	  	});
+  	}
+  };
+  function getVenueInfoFromMapTools() {
+  	var urlField = $('#maptools').contents().find("#tb_url");
+  	// var params = parseURL(urlField.val());
+  	// alert(urlField);
+  };
+
+  function parseURL(url) {
+    var parser = document.createElement('a'),
+        searchObject = {},
+        queries, split, i;
+    // Let the browser do the work
+    parser.href = url;
+    // Convert query string to object
+    queries = parser.search.replace(/^\?/, '').split('&');
+    for( i = 0; i < queries.length; i++ ) {
+        split = queries[i].split('=');
+        searchObject[split[0]] = split[1];
+    }
+    return {
+        protocol: parser.protocol,
+        host: parser.host,
+        hostname: parser.hostname,
+        port: parser.port,
+        pathname: parser.pathname,
+        search: parser.search,
+        searchObject: searchObject,
+        hash: parser.hash
+    };
+  }
+
+  $(document).ready(function() {
+  	$('#maplink').on('input', function() {
+  		var mapUrl = $('#maplink').val();
+  		var params = parseURL(mapUrl);
+
+  		$('#latitude').val(params.searchObject.clat);
+  		$('#longitude').val(params.searchObject.clng);
+  		$('#radius').val(Math.round(params.searchObject.r * 1000));
+
+  		if (message.error) {
+  			$("#messageError").removeClass("hide");
+  		}
+  	});
+  });
+  </script>
+  <body>
+  <header>
+    <% include ../partials/header %>
+  </header>
+
+  <main class="container">
+  		<div class="alert alert-success <%= message.success?"":"hide" %>" id="messageSuccess"><%= message.success %></div>
+  		<div class="alert alert-danger <%= message.error?"":"hide" %>" id="messageError"><%= message.error %></div>
+  	<% if (!message.error) { %>
+	<form method="POST" style="margin-left: 10; margin-right: 10;" id="fieldsForm">
+	  <legend>Update Venue</legend>
+	  <div class="form-group">
+	    <input name="venueNo" id="venueNo" type="hidden" value="<%= venueNo?venueNo:"" %>"/>
+	  </div>
+	  <div class="form-group">
+	    <label for="locationId">Venue Id</label>
+	    <input readonly name="locationId" id="locationId" value="<%= locationId %>" placeholder="Venue Id" class="form-control"/>
+	  </div>
+	  <div class="form-group">
+	    <label for="locationName">Venue Name</label>
+	    <input name="locationName" id="locationName" value="<%= locationName %>" placeholder="Venue Name" autofocus="autofocus" class="form-control"/>
+	  </div>
+	  <div class="form-group">
+	    <label for="latitude">Latitude</label>
+	    <input name="latitude" id="latitude" value="<%= latitude %>" placeholder="Latitude" class="form-control"/>
+	  </div>
+	  <div class="form-group">
+	    <label for="longitude">Longitude</label>
+	    <input name="longitude" id="longitude" value="<%= longitude %>" placeholder="Longitude" class="form-control"/>
+	  </div>
+	  <div class="form-group">
+	    <label for="radius">Radius</label>
+	    <input name="radius" id="radius" value="<%= radius %>" placeholder="Radius" class="form-control"/>
+	  </div>
+	  <div class="form-group">
+	    <label for="eventsCount">Events at this venue</label>
+	    <input readonly name="eventsCount" id="eventsCount" value="<%= eventsCount %>" placeholder="Count" class="form-control"/>
+	  </div>
+	  <div class="form-group">
+	    <label for="maplink">Link from MapTools</label>
+	    <input name="maplink" id="maplink" value="" placeholder="Link from MapTools" class="form-control"/>
+	  </div>
+	  <div class="form-group">
+	    <% if (venueNo !== undefined) { %>
+	    <a href="/venue?no=<%= venueNo>0?parseInt(venueNo)-1:0%>" class="btn btn-default" role="button">Prev</a>
+	    <% } %>
+	    <input type="button" class="<%= readonly?"btn btn-disabled":"btn btn-primary" %>" <%= readonly?"disabled":"" %> value="Update Venue" onclick="updateVenue();"/>
+	    <input type="button" class="<%= readonly?"btn btn-disabled":"btn btn-danger" %>" <%= readonly?"disabled":"" %> value="Delete Venue" onclick="deleteVenue();"/>
+	    <% if (venueNo !== undefined) { %>
+	    <a href="/venue?no=<%= parseInt(venueNo)+1%>" class="btn btn-default" role="button">Next</a>
+	    <% } %>
+	    <% if (venueNo !== undefined) { %>
+	    <p><b> <%= (parseInt(venueNo) + 1) + " of " + totalCount %> </b></p>
+	    <% } %>
+	  </div>
+	  <div class="form-group">
+	    <label for="search">Search And Merge</label>
+	    <div class="input-group" name="search">
+		  <input name="searchName" id="searchName" value="" placeholder="Search by Name" class="form-control"/>
+		  <span class="input-group-btn">
+		    <input type="button" class="btn btn-primary" value="Search" onclick="searchVenue();"/>
+		  </span>
+		  <br />
+	    </div>
+	    <div class="row" name="searchResults" id="searchResults">
+	    </div>
+	  </div>
+	</form>
+
+	<iframe id="maptools" src="/venue/map?lat=<%= latitude %>&lng=<%= longitude %>&r=<%= radius / 1000 %>" width="100%" height="1500">
+	</iframe>
+	<% } %>
+  </main>
+  <footer>
+    <% include ../partials/footer %>
+  </footer>
+  </body>
+</html>
+
